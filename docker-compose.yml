@@ -2,6 +2,7 @@ version: '3'
 
 networks:
   openhim:
+    driver: bridge
 
 services:
   mongo-db:
@@ -13,18 +14,6 @@ services:
       - "mongo-data:/data/db"
     restart: unless-stopped
 
-  openempi-db:
-    container_name: openempi-db_demo
-    image: uwitech/postgresql
-    volumes:
-        - cr-pgdata:/var/lib/postgresql/data
-    environment:
-        - POSTGRES_USER=openempi
-        - POSTGRES_DB=openempi
-        - POSTGRES_PASSWORD=openempi
-    ports:
-        - 5432:5432
-
 
   openhim-core:
     container_name: openhim-core
@@ -35,7 +24,7 @@ services:
       mongo_atnaUrl: "mongodb://mongo-db/openhim-development"
       NODE_ENV: "development"
     ports:
-      - "8080:8080"
+      - "8081:8080"
       - "5000:5000"
       - "5001:5001"
     networks:
@@ -63,21 +52,53 @@ services:
      timeout: 30s
      retries: 3
 
-  openempi-app:
-    container_name: openempi-demo
-    env_file: .env
-    image: uwitech/ohie-cr
+    #  OpenCR services
+  opencr:
+    container_name: opencr
+    image: stansl/opencr
     ports:
-        - 8081:8080
-        - 3600:3600
-        - 3700:3700
-    volumes:
-        - cr-orientdata:/data
+      - "3000:3000"
     depends_on:
-        - openempi-db
+      - fhir
+      - es
+    restart: on-failure
+    environment:
+      - NODE_ENV=cicd
+    networks: 
+      - openhim
+
+  fhir:
+    container_name: hapi-fhir
+    image: hapiproject/hapi:v4.1.0
+    ports:
+      - "8080:8080"
+    networks:
+      - openhim
+
+  es:
+    container_name: es
+    image: intrahealth/elasticsearch:latest
+    environment:
+      - node.name=es01
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - data01:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+    networks:
+      - openhim
+
     
 
 volumes:
   mongo-data:
   cr-pgdata:
   cr-orientdata:
+  data01:
+    driver: local
