@@ -55,7 +55,7 @@ services:
     #  OpenCR services
   opencr:
     container_name: opencr
-    image: stansl/opencr
+    build: https://github.com/IntelliSOFT-Consulting/client-registry/tree/ds_iplir/docker/opencr
     ports:
       - "3000:3000"
     depends_on:
