@@ -55,7 +55,7 @@ services:
     #  OpenCR services
   opencr:
     container_name: opencr
-    image: stansl/opencr
+    image: intellisoftkenya/opencr
     ports:
       - "3000:3000"
     depends_on:
