@@ -1,7 +1,7 @@
 version: '3'
 
 networks:
-  openhim:
+  openhim_openhim:
     driver: bridge
 
 services:
@@ -9,10 +9,24 @@ services:
     container_name: mongo-db
     image: mongo:4.0
     networks:
-      - openhim
+      - openhim_openhim
     volumes:
       - "mongo-data:/data/db"
     restart: unless-stopped
+
+  db:
+    image: mysql:5.7
+    container_name: mysqldb
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    networks:
+      - openhim_openhim
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
 
 
   openhim-core:
@@ -28,7 +42,7 @@ services:
       - "5000:5000"
       - "5001:5001"
     networks:
-      - openhim
+      - openhim_openhim
     healthcheck:
      test: "curl -sSk https://openhim-core:8080/heartbeat || exit 1"
      interval: 30s
@@ -40,7 +54,7 @@ services:
     image: jembi/openhim-console:latest
     restart: unless-stopped
     networks:
-      - openhim
+      - openhim_openhim
     ports:
       - "9000:80"
     volumes:
@@ -52,7 +66,7 @@ services:
      timeout: 30s
      retries: 3
 
-    #  OpenCR services
+  #   #  OpenCR services
   opencr:
     container_name: opencr
     image: intellisoftkenya/opencr
@@ -68,12 +82,12 @@ services:
       - openhim
 
   fhir:
-    container_name: hapi-fhir
-    image: hapiproject/hapi:v4.1.0
+    container_name: globits-hapi-fhir
+    image: globitsvn/globits-hapi-fhir-cs
     ports:
-      - "8080:8080"
+      - "8082:8082"
     networks:
-      - openhim
+      - openhim_openhim
 
   es:
     container_name: es
@@ -92,13 +106,14 @@ services:
     ports:
       - 9200:9200
     networks:
-      - openhim
+      - openhim_openhim
 
     
 
 volumes:
   mongo-data:
-  cr-pgdata:
-  cr-orientdata:
+  mysql-data:
+  # cr-pgdata:
+  # cr-orientdata:
   data01:
     driver: local
