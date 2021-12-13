@@ -69,7 +69,7 @@ services:
   #   #  OpenCR services
   opencr:
     container_name: opencr
-    image: intellisoftkenya/opencr
+    image: intrahealth/opencr
     ports:
       - "3000:3000"
     depends_on:
